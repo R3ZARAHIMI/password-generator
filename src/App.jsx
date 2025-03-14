@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 import 'react-toastify/dist/ReactToastify.css';
+import './i18n'; // import i18n
 
 function App() {
+  const { t, i18n } = useTranslation();
   const [password, setPassword] = useState('');
   const [length, setLength] = useState(8);
   const [includeUppercase, setIncludeUppercase] = useState(true);
   const [includeLowercase, setIncludeLowercase] = useState(true);
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const [includeSymbols, setIncludeSymbols] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   // تابع تولید پسورد
   const generatePassword = () => {
@@ -35,7 +39,7 @@ function App() {
   // تابع کپی کردن پسورد
   const copyToClipboard = () => {
     navigator.clipboard.writeText(password).then(() => {
-      toast.success('Password copied to clipboard!', {
+      toast.success(t('copiedMessage'), {
         position: "top-center",
         autoClose: 2000,
         hideProgressBar: false,
@@ -47,15 +51,44 @@ function App() {
     });
   };
 
+  // تغییر زبان
+  const changeLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'fa' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+  // تغییر حالت دارک مود
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    localStorage.setItem('darkMode', !darkMode);
+  };
+
   // با لود شدن سایت، یک پسورد رندوم ایجاد شود
   useEffect(() => {
     generatePassword();
-  }, []); // آرایه وابستگی خالی برای اجرا فقط یک بار
+    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedDarkMode);
+  }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#F5F5F5]">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-96 border border-gray-200">
-        <h1 className="text-2xl font-bold mb-4 text-center text-[#333333]">Password Generator</h1>
+    <div className={`flex flex-col items-center justify-center min-h-screen ${darkMode ? 'bg-[#1E1E1E] text-white' : 'bg-[#F5F5F5] text-[#333333]'}`}>
+      {/* دکمه تغییر زبان */}
+      <button
+  onClick={changeLanguage}
+  className="fixed top-4 right-4 p-2 bg-[#E95420] text-white rounded-full shadow-lg hover:bg-[#D3461D] transition-all"
+>
+  {i18n.language === 'fa' ? 'English' : 'فارسی'}
+</button>
+
+      {/* دکمه حالت دارک مود */}
+      <button
+        onClick={toggleDarkMode}
+        className="fixed top-4 left-4 p-2 bg-[#E95420] text-white rounded-full shadow-lg hover:bg-[#D3461D] transition-all"
+      >
+        {darkMode ? '☀️' : '🌙'}
+      </button>
+
+      <div className={`bg-${darkMode ? '[#333333]' : 'white'} p-8 rounded-2xl shadow-lg w-96 border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+        <h1 className="text-2xl font-bold mb-4 text-center">{t('title')}</h1>
         
         {/* نمایش پسورد زیر عنوان */}
         <div className="mb-4">
@@ -64,14 +97,14 @@ function App() {
             value={password}
             readOnly
             onClick={copyToClipboard}
-            className="w-full p-3 border border-gray-300 rounded-xl text-center cursor-pointer bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#E95420] focus:border-transparent transition-all"
+            className={`w-full p-3 border ${darkMode ? 'border-gray-700 bg-[#1E1E1E] text-white' : 'border-gray-300 bg-white text-[#333333]'} rounded-xl text-center cursor-pointer hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#E95420] focus:border-transparent transition-all`}
           />
-          <p className="text-sm text-gray-500 mt-1 text-center">Click to copy</p>
+          <p className="text-sm text-gray-500 mt-1 text-center">{t('passwordPlaceholder')}</p>
         </div>
 
         {/* تنظیم طول پسورد */}
         <div className="mb-4">
-          <label className="block mb-2 text-[#333333]">Password Length: {length}</label>
+          <label className="block mb-2">{t('lengthLabel', { length })}</label>
           <input
             type="range"
             min="4"
@@ -84,41 +117,41 @@ function App() {
 
         {/* گزینه‌های انتخاب */}
         <div className="mb-4 space-y-2">
-          <label className="flex items-center text-[#333333]">
+          <label className="flex items-center">
             <input
               type="checkbox"
               checked={includeUppercase}
               onChange={(e) => setIncludeUppercase(e.target.checked)}
               className="mr-2 w-5 h-5 accent-[#E95420]"
             />
-            Include Uppercase
+            {t('includeUppercase')}
           </label>
-          <label className="flex items-center text-[#333333]">
+          <label className="flex items-center">
             <input
               type="checkbox"
               checked={includeLowercase}
               onChange={(e) => setIncludeLowercase(e.target.checked)}
               className="mr-2 w-5 h-5 accent-[#E95420]"
             />
-            Include Lowercase
+            {t('includeLowercase')}
           </label>
-          <label className="flex items-center text-[#333333]">
+          <label className="flex items-center">
             <input
               type="checkbox"
               checked={includeNumbers}
               onChange={(e) => setIncludeNumbers(e.target.checked)}
               className="mr-2 w-5 h-5 accent-[#E95420]"
             />
-            Include Numbers
+            {t('includeNumbers')}
           </label>
-          <label className="flex items-center text-[#333333]">
+          <label className="flex items-center">
             <input
               type="checkbox"
               checked={includeSymbols}
               onChange={(e) => setIncludeSymbols(e.target.checked)}
               className="mr-2 w-5 h-5 accent-[#E95420]"
             />
-            Include Symbols
+            {t('includeSymbols')}
           </label>
         </div>
 
@@ -127,7 +160,7 @@ function App() {
           onClick={generatePassword}
           className="w-full bg-[#E95420] text-white py-3 rounded-xl hover:bg-[#D3461D] focus:outline-none focus:ring-2 focus:ring-[#E95420] focus:ring-offset-2 transition-all"
         >
-          Generate Password
+          {t('generateButton')}
         </button>
       </div>
 
@@ -142,7 +175,7 @@ function App() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        toastClassName="bg-[#333333] text-white"
+        toastClassName={`${darkMode ? 'bg-[#333333] text-white' : 'bg-white text-[#333333]'}`}
         progressClassName="bg-[#E95420]"
       />
     </div>
