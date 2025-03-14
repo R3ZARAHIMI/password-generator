@@ -26,7 +26,7 @@ const resources = {
       includeNumbers: "شامل اعداد",
       includeSymbols: "شامل نمادها",
       generateButton: "تولید پسورد",
-      copiedMessage: "پسورد در کلیپ‌بورد کپی شد!",
+      copiedMessage: "!پسورد در کلیپ‌بورد کپی شد ",
     },
   },
 };
