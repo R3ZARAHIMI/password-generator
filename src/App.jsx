@@ -14,25 +14,74 @@ function App() {
   const [includeSymbols, setIncludeSymbols] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
 
-  // تابع تولید پسورد
+  // تابع برای بهم ریختن رشته
+  const shuffleString = (str) => {
+    const array = str.split('');
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]]; // جابجایی عناصر
+    }
+    return array.join('');
+  };
+
+  // تابع تولید پسورد بهبود یافته
   const generatePassword = () => {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const lowercase = 'abcdefghijklmnopqrstuvwxyz';
     const numbers = '0123456789';
     const symbols = '!@#$%^&*()_+[]{}|;:,.<>?';
 
+    // بررسی اینکه حداقل یک گزینه انتخاب شده باشد
+    if (!includeUppercase && !includeLowercase && !includeNumbers && !includeSymbols) {
+      setIncludeLowercase(true); // حداقل یک گزینه باید انتخاب شود
+      toast.warning(t('selectOneOption'), {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return;
+    }
+
     let characters = '';
+    let generatedPassword = '';
+    
+    // مجموعه کاراکترها برای انتخاب تصادفی
     if (includeUppercase) characters += uppercase;
     if (includeLowercase) characters += lowercase;
     if (includeNumbers) characters += numbers;
     if (includeSymbols) characters += symbols;
 
-    let generatedPassword = '';
-    for (let i = 0; i < length; i++) {
+    // لیستی از انواع کاراکترهایی که باید حتماً استفاده شوند
+    const requiredTypes = [];
+    if (includeUppercase) requiredTypes.push(uppercase);
+    if (includeLowercase) requiredTypes.push(lowercase);
+    if (includeNumbers) requiredTypes.push(numbers);
+    if (includeSymbols) requiredTypes.push(symbols);
+
+    // بررسی اینکه طول پسورد کمتر از تعداد انواع کاراکترها نباشد
+    if (length < requiredTypes.length) {
+      setLength(requiredTypes.length);
+      toast.info(t('lengthAdjusted', { newLength: requiredTypes.length }), {
+        position: "top-center",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    // اول حداقل یک کاراکتر از هر نوع انتخابی اضافه کنید
+    for (const charType of requiredTypes) {
+      const randomIndex = Math.floor(Math.random() * charType.length);
+      generatedPassword += charType[randomIndex];
+    }
+
+    // سپس بقیه کاراکترها را به صورت تصادفی اضافه کنید
+    for (let i = generatedPassword.length; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * characters.length);
       generatedPassword += characters[randomIndex];
     }
 
+    // برای جلوگیری از پیش‌بینی پذیری، پسورد را بهم بریزید
+    generatedPassword = shuffleString(generatedPassword);
+    
     setPassword(generatedPassword);
   };
 
@@ -56,28 +105,36 @@ function App() {
     const newLang = i18n.language === 'en' ? 'fa' : 'en';
     i18n.changeLanguage(newLang);
   };
+  
   // تغییر حالت دارک مود
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
     localStorage.setItem('darkMode', !darkMode);
   };
 
-  // با لود شدن سایت، یک پسورد رندوم ایجاد شود
+  // با لود شدن سایت، یک پسورد رندوم ایجاد شود و حالت دارک مود بررسی شود
   useEffect(() => {
-    generatePassword();
     const savedDarkMode = localStorage.getItem('darkMode') === 'true';
     setDarkMode(savedDarkMode);
+    generatePassword();
   }, []);
+
+  // با تغییر گزینه‌ها، پسورد جدید تولید شود
+  useEffect(() => {
+    if (includeUppercase || includeLowercase || includeNumbers || includeSymbols) {
+      generatePassword();
+    }
+  }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
 
   return (
     <div className={`flex flex-col items-center justify-center min-h-screen ${darkMode ? 'bg-[#1E1E1E] text-white' : 'bg-[#F5F5F5] text-[#333333]'}`}>
       {/* دکمه تغییر زبان */}
       <button
-  onClick={changeLanguage}
-  className="fixed top-4 right-4 p-2 bg-[#E95420] text-white rounded-full shadow-lg hover:bg-[#D3461D] transition-all"
->
-  {i18n.language === 'fa' ? 'English' : 'فارسی'}
-</button>
+        onClick={changeLanguage}
+        className="fixed top-4 right-4 p-2 bg-[#E95420] text-white rounded-full shadow-lg hover:bg-[#D3461D] transition-all"
+      >
+        {i18n.language === 'fa' ? 'English' : 'فارسی'}
+      </button>
 
       {/* دکمه حالت دارک مود */}
       <button
@@ -110,7 +167,7 @@ function App() {
             min="4"
             max="32"
             value={length}
-            onChange={(e) => setLength(e.target.value)}
+            onChange={(e) => setLength(parseInt(e.target.value))}
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg accent-[#E95420]"
           />
         </div>
